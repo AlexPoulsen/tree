@@ -1,0 +1,269 @@
+/*
+Inspired by Daniel Shiffman
+http://codingtra.in
+https://www.youtube.com/watch?v=z0YFFg_nBjw
+https://github.com/CodingTrain/QuadTree
+*/
+
+
+import kit.math;
+
+
+function absF(n: Float) {
+    if n < 0 {
+        return n * -1;
+    } else {
+        return n;
+    }
+}
+
+
+struct Point {
+    var x: Float;
+    var y: Float;
+
+    static function new(x: Float, y: Float) {
+        return struct Self {
+            x,
+            y
+        };
+    }
+
+    function dist(other: Point) {
+        return sqrt((this.x - other.x) * (this.x - other.x)
+                    +
+                    (this.y - other.y) * (this.y - other.y)
+                    );
+    }
+}
+
+
+struct Rect {
+    var x: Float;
+    var y: Float;
+    var w: Float;
+    var h: Float;
+
+    var tl: Point;
+    var tr: Point;
+    var bl: Point;
+    var br: Point;
+
+    static function new(x: Float, y: Float, w: Float, h: Float) {
+        return struct Self {
+            x,
+            y,
+            w,
+            h,
+            tl: Point.new(x,     y    ),
+            tr: Point.new(x + w, y    ),
+            bl: Point.new(x,     y + h),
+            br: Point.new(x + w, y + h)
+        };
+    }
+
+    function dist(other: Rect) {
+        var dist_tl = this.tl.dist(other.tl);
+        var dist_tr = this.tr.dist(other.tr);
+        var dist_bl = this.bl.dist(other.bl);
+        var dist_br = this.br.dist(other.br);
+    }
+
+    function contains(pt: Point) {
+        return (pt.x >= this.x - this.w &&
+                pt.x <= this.x + this.w &&
+                pt.y >= this.y - this.h &&
+                pt.y <= this.y + this.h);
+    }
+
+    function intersects(other: Rect) {
+        return !(other.x - other.w > this.x + this.w ||
+                 other.x + other.w < this.x - this.w ||
+                 other.y - other.h > this.y + this.h ||
+                 other.y + other.h < this.y - this.h);
+    }
+}
+
+struct Circle {
+    var x: Float;
+    var y: Float;
+    var r: Float;
+    var rSquared: Float;
+
+    static function new(x: Float, y: Float, r: Float) {
+        var rSquared = r * r;
+        return struct Self {
+            x,
+            y,
+            r,
+            rSquared
+        };
+    }
+
+    function contains(pt: Point) {
+        // check if the point is in the circle by checking if the euclidean distance of
+        // the point and the center of the circle if smaller or equal to the radius of
+        // the circle
+        var d: Float = (pt.x - this.x) * (pt.x - this.x) + (pt.y - this.y) * (pt.y - this.y);
+        return d <= this.rSquared;
+    }
+
+    function intersects(other: Rect) {
+
+        var xDist: Float = absF(other.x - this.x);
+        var yDist: Float = absF(other.y - this.y);
+        var r: Float = this.r;
+        var w: Float = other.w;
+        var h: Float = other.h;
+
+        var edges: Float = (xDist - w) * (xDist - w) + (yDist - h) * (yDist - h);
+
+        if (xDist > (r + w) || yDist > (r + h)) {
+            return false;
+        }
+
+        // intersection within the circle
+        if (xDist <= w || yDist <= h) {
+            return true;
+        }
+
+        // intersection on the edge of the circle
+        return edges <= this.rSquared;
+    }
+}
+
+
+struct Children {
+    var topright: QuadTree;
+    var topleft: QuadTree;
+    var bottomright: QuadTree;
+    var bottomleft: QuadTree;
+
+    static function new(tr: QuadTree, tl: QuadTree, br: QuadTree, bl: QuadTree) {
+        return struct Self {
+            tr,
+            tl,
+            br,
+            bl
+        };
+    }
+}
+
+
+struct QuadTree {
+    var boundary: Rect;
+    var capacity: Int;
+    var points: Array;
+    var divided: Bool;
+    var nextInsert: Int = 0;
+    var children: Children;
+
+    static function new(boundary: Rect, capacity: Int) {
+        if capacity < 1 {
+            capacity = 1;
+        }
+
+        return struct Self {
+            boundary,
+            capacity,
+            points: Array.new(capacity),
+            divided: false,
+            nextInsert: 0
+        };
+    }
+
+    function subdivide() {
+        var x = this.boundary.x;
+        var y = this.boundary.y;
+        var w = this.boundary.w / 2;
+        var h = this.boundary.h / 2;
+
+        var tr: Rect = Rect.new(x + w, y - h, w, h);
+        var tl: Rect = Rect.new(x - w, y - h, w, h);
+        var br: Rect = Rect.new(x + w, y + h, w, h);
+        var bl: Rect = Rect.new(x - w, y + h, w, h);
+
+        var topright: Quadtree = QuadTree.new(tr, this.capacity);
+        var topleft: Quadtree = QuadTree.new(tl, this.capacity);
+        var bottomright: Quadtree = QuadTree.new(br, this.capacity);
+        var bottomleft: Quadtree = QuadTree.new(bl, this.capacity);
+
+        this.children: Children = struct Children {
+            topleft,
+            topright,
+            bottomright,
+            bottomleft
+        }
+
+        this.divided = true;
+    }
+
+    function insert(pt: Point) {
+        if (!this.boundary.contains(pt)) {
+            return false;
+        }
+
+        if (this.points.length < this.capacity) {
+            this.points[this.nextInsert] = pt;
+            this.nextInsert++;
+            printf("inserted");
+            return true;
+        }
+
+        if (!this.divided) {
+            printf("dividing");
+            this.subdivide();
+        }
+
+        if (this.topright.insert(pt) ||
+            this.topleft.insert(pt) ||
+            this.bottomright.insert(pt) ||
+            this.bottomleft.insert(pt)) {
+                printf("subinsert");
+                return true;
+        }
+    }
+
+    function query(range: Rect, found: Vector) {
+        if (!range.intersects(this.boundary)) {
+            return Vector.new();
+        }
+
+        for p in this.points {
+            if (range.contains(p)) {
+                found.push(p);
+            }
+        }
+
+        if (this.divided) {
+            var tl = this.topleft.query(range, found);
+            if (tl.length != 0) {
+                return tl;
+            }
+            var tr = this.topright.query(range, found);
+            if (tr.length != 0) {
+                return tr;
+            }
+            var bl = this.bottomleft.query(range, found);
+            if (bl.length != 0) {
+                return bl;
+            }
+            var br = this.bottomright.query(range, found);
+            if (br.length != 0) {
+                return br;
+            }
+        }
+        return found;
+    }
+
+    rules {
+        ($this.topright) => $this.children.topright;
+    }
+}
+
+
+function main() {
+    var canvas = Rect.new(0, 0, 20, 20);
+    var qtree: QuadTree = QuadTree.new(canvas, 4);
+    qtree.insert(Point.new(1, 3));
+}
