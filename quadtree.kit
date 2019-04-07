@@ -7,6 +7,7 @@ https://github.com/CodingTrain/QuadTree
 
 
 import kit.math;
+// var count: Int = 0;
 
 
 function absF(n: Float) {
@@ -34,6 +35,10 @@ struct Point {
                     +
                     (this.y - other.y) * (this.y - other.y)
                     );
+    }
+
+    function print() {
+        printf("(%f, %f)", this.x, this.y);
     }
 }
 
@@ -81,6 +86,17 @@ struct Rect {
                  other.x + other.w < this.x - this.w ||
                  other.y - other.h > this.y + this.h ||
                  other.y + other.h < this.y - this.h);
+    }
+
+    function print() {
+        this.tl.print();
+        printf(", ");
+        this.tr.print();
+        printf(", ");
+        this.bl.print();
+        printf(", ");
+        this.br.print();
+        printf("\n");
     }
 }
 
@@ -133,21 +149,21 @@ struct Circle {
 }
 
 
-struct Children {
-    var topright: QuadTree;
-    var topleft: QuadTree;
-    var bottomright: QuadTree;
-    var bottomleft: QuadTree;
+// struct Children {
+//     var topright: QuadTree;
+//     var topleft: QuadTree;
+//     var bottomright: QuadTree;
+//     var bottomleft: QuadTree;
 
-    static function new(topright: QuadTree, topleft: QuadTree, bottomright: QuadTree, bottomleft: QuadTree) {
-        return struct Self {
-            topright,
-            topleft,
-            bottomright,
-            bottomleft
-        };
-    }
-}
+//     static function new(topright: QuadTree, topleft: QuadTree, bottomright: QuadTree, bottomleft: QuadTree) {
+//         return struct Self {
+//             topright,
+//             topleft,
+//             bottomright,
+//             bottomleft
+//         };
+//     }
+// }
 
 
 struct QuadTree {
@@ -156,7 +172,11 @@ struct QuadTree {
     var points: Array;
     var divided: Bool;
     var nextInsert: Int = 0;
-    var children: Children;
+    // var children: Children;
+    var topright: Ptr[QuadTree];
+    var topleft: Ptr[QuadTree];
+    var bottomright: Ptr[QuadTree];
+    var bottomleft: Ptr[QuadTree];
 
     static function new(boundary: Rect, capacity: Int) {
         if capacity < 1 {
@@ -178,22 +198,35 @@ struct QuadTree {
         var w = this.boundary.w / 2;
         var h = this.boundary.h / 2;
 
-        var tr: Rect = Rect.new(x + w, y - h, w, h);
-        var tl: Rect = Rect.new(x - w, y - h, w, h);
-        var br: Rect = Rect.new(x + w, y + h, w, h);
-        var bl: Rect = Rect.new(x - w, y + h, w, h);
+        var w2: Float = w / 2;
+        var h2: Float = h / 2;
 
-        var topright: QuadTree = QuadTree.new(tr, this.capacity);
-        var topleft: QuadTree = QuadTree.new(tl, this.capacity);
-        var bottomright: QuadTree = QuadTree.new(br, this.capacity);
-        var bottomleft: QuadTree = QuadTree.new(bl, this.capacity);
+        var tr: Rect = Rect.new(x + w2, y,      w2, h2);
+        var tl: Rect = Rect.new(x,      y,      w2, h2);
+        var br: Rect = Rect.new(x + w2, y + h2, w2, h2);
+        var bl: Rect = Rect.new(x,      y + h2, w2, h2);
 
-        this.children = struct Children {
-            topleft,
-            topright,
-            bottomright,
-            bottomleft
-        };
+        // var topright: QuadTree = QuadTree.new(tr, this.capacity);
+        // var topleft: QuadTree = QuadTree.new(tl, this.capacity);
+        // var bottomright: QuadTree = QuadTree.new(br, this.capacity);
+        // var bottomleft: QuadTree = QuadTree.new(bl, this.capacity);
+
+        this.topright = malloc(sizeof QuadTree);
+        this.topleft = malloc(sizeof QuadTree);
+        this.bottomright = malloc(sizeof QuadTree);
+        this.bottomleft = malloc(sizeof QuadTree);
+
+        *this.topright = QuadTree.new(tr, this.capacity);
+        *this.topleft = QuadTree.new(tl, this.capacity);
+        *this.bottomright = QuadTree.new(br, this.capacity);
+        *this.bottomleft = QuadTree.new(bl, this.capacity);
+
+        // this.children = struct Children {
+        //     topleft,
+        //     topright,
+        //     bottomright,
+        //     bottomleft
+        // };
 
         this.divided = true;
     }
@@ -201,27 +234,39 @@ struct QuadTree {
     function insert(pt: Point) {
         if (!this.boundary.contains(pt)) {
             return false;
-        }
-
-        if (this.points.length < this.capacity) {
-            this.points[this.nextInsert] = pt;
-            this.nextInsert++;
-            printf("inserted");
-            return true;
-        }
-
-        if (!this.divided) {
-            printf("dividing");
-            this.subdivide();
-        }
-
-        if (this.topright.insert(pt) ||
-            this.topleft.insert(pt) ||
-            this.bottomright.insert(pt) ||
-            this.bottomleft.insert(pt)) {
-                printf("subinsert");
+        } else {
+            if (this.points.length < this.capacity) {
+                this.points[this.nextInsert] = pt;
+                this.nextInsert++;
+                printf("inserted++++++++++++++++++++++++++++++++++\n");
                 return true;
+            } else {
+                if (!this.divided && this.points.length >= this.capacity) {
+                    // if count > 30 {
+                    //     exit(EXIT_FAILURE);
+                    // }
+                    // printf("dividing\n");
+                    // this.boundary.print();
+                    this.subdivide();
+                    // printf("---\n");
+                    // this.topright.boundary.print();
+                    // this.topleft.boundary.print();
+                    // this.bottomright.boundary.print();
+                    // this.bottomleft.boundary.print();
+                    // printf("----------\n");
+                    // count++;
+                }
+
+                if (this.topright.insert(pt) ||
+                    this.topleft.insert(pt) ||
+                    this.bottomright.insert(pt) ||
+                    this.bottomleft.insert(pt)) {
+                        printf("subinsert^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+                        return true;
+                }
+            }
         }
+        return false;
     }
 
     function query(range: Rect, found: Vector) {
@@ -256,17 +301,18 @@ struct QuadTree {
         return found;
     }
 
-    rules {
-        ($this.topright) => $this.children.topright;
-        ($this.topleft) => $this.children.topleft;
-        ($this.bottomright) => $this.children.bottomright;
-        ($this.bottomleft) => $this.children.bottomleft;
-    }
+    // rules {
+    //     ($this.topright) => $this.children.topright;
+    //     ($this.topleft) => $this.children.topleft;
+    //     ($this.bottomright) => $this.children.bottomright;
+    //     ($this.bottomleft) => $this.children.bottomleft;
+    // }
 }
 
 
 function main() {
     var canvas = Rect.new(0, 0, 20, 20);
     var qtree: QuadTree = QuadTree.new(canvas, 4);
+    qtree.boundary.print();
     qtree.insert(Point.new(1, 3));
 }
