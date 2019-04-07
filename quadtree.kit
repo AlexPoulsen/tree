@@ -7,6 +7,7 @@ https://github.com/CodingTrain/QuadTree
 
 
 import kit.math;
+include "string.h";
 // var count: Int = 0;
 
 
@@ -16,6 +17,14 @@ function absF(n: Float) {
     } else {
         return n;
     }
+}
+
+
+function strAdd(one: CString, two: CString) {
+    var out = malloc(one.length + two.length);
+    strcpy(out, one);
+    strcat(out, two);
+    return out;
 }
 
 
@@ -307,12 +316,31 @@ struct QuadTree {
     //     ($this.bottomright) => $this.children.bottomright;
     //     ($this.bottomleft) => $this.children.bottomleft;
     // }
+
+    function printDivided(prefix: CString = "") {
+        if this.divided {
+            printf("%s", prefix);
+            printf("true\n");
+            var nextPrefix = strAdd("|..", prefix);
+            this.topright.printDivided(nextPrefix);
+            this.topleft.printDivided(nextPrefix);
+            this.bottomright.printDivided(nextPrefix);
+            this.bottomleft.printDivided(nextPrefix);
+        } else {
+            printf("%s", prefix);
+            printf("false\n");
+        }
+    }
 }
 
 
 function main() {
     var canvas = Rect.new(0, 0, 20, 20);
     var qtree: QuadTree = QuadTree.new(canvas, 4);
-    qtree.boundary.print();
+    // qtree.boundary.print();
     qtree.insert(Point.new(1, 3));
+    // qtree.insert(Point.new(10, 3));
+    // qtree.insert(Point.new(7, 5));
+    // qtree.insert(Point.new(2, 18));
+    qtree.printDivided();
 }
