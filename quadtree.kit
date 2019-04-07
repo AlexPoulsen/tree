@@ -139,12 +139,12 @@ struct Children {
     var bottomright: QuadTree;
     var bottomleft: QuadTree;
 
-    static function new(tr: QuadTree, tl: QuadTree, br: QuadTree, bl: QuadTree) {
+    static function new(topright: QuadTree, topleft: QuadTree, bottomright: QuadTree, bottomleft: QuadTree) {
         return struct Self {
-            tr,
-            tl,
-            br,
-            bl
+            topright,
+            topleft,
+            bottomright,
+            bottomleft
         };
     }
 }
@@ -183,17 +183,17 @@ struct QuadTree {
         var br: Rect = Rect.new(x + w, y + h, w, h);
         var bl: Rect = Rect.new(x - w, y + h, w, h);
 
-        var topright: Quadtree = QuadTree.new(tr, this.capacity);
-        var topleft: Quadtree = QuadTree.new(tl, this.capacity);
-        var bottomright: Quadtree = QuadTree.new(br, this.capacity);
-        var bottomleft: Quadtree = QuadTree.new(bl, this.capacity);
+        var topright: QuadTree = QuadTree.new(tr, this.capacity);
+        var topleft: QuadTree = QuadTree.new(tl, this.capacity);
+        var bottomright: QuadTree = QuadTree.new(br, this.capacity);
+        var bottomleft: QuadTree = QuadTree.new(bl, this.capacity);
 
-        this.children: Children = struct Children {
+        this.children = struct Children {
             topleft,
             topright,
             bottomright,
             bottomleft
-        }
+        };
 
         this.divided = true;
     }
@@ -258,6 +258,9 @@ struct QuadTree {
 
     rules {
         ($this.topright) => $this.children.topright;
+        ($this.topleft) => $this.children.topleft;
+        ($this.bottomright) => $this.children.bottomright;
+        ($this.bottomleft) => $this.children.bottomleft;
     }
 }
 
