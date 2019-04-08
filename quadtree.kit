@@ -40,11 +40,13 @@ function randF(lower: Float, upper: Float) {
 struct Point {
     var x: Float;
     var y: Float;
+    var initialized: Bool = false;
 
     static function new(x: Float, y: Float) {
         return struct Self {
             x,
-            y
+            y,
+            initialized: true
         };
     }
 
@@ -55,8 +57,16 @@ struct Point {
                     );
     }
 
-    function print() {
-        printf("(%f, %f)", this.x, this.y);
+    function print(printUnInit: Bool = true, append: CString = "") {
+        if this.initialized {
+            printf("(%f, %f)", this.x, this.y);
+            printf("%s", append);
+        } else {
+            if printUnInit {
+                printf("(-.---, -.---)");
+                printf("%s", append);
+            }
+        }
     }
 }
 
@@ -72,7 +82,7 @@ struct Rect {
     var bl: Point;
     var br: Point;
 
-    static function new(x: Float, y: Float, w: Float, h: Float) {
+    static function new(x: Float, y: Float, w: Float, h: Float): Rect {
         return struct Self {
             x,
             y,
@@ -85,28 +95,29 @@ struct Rect {
         };
     }
 
-    function dist(other: Rect) {
+    function dist(other: Rect): Float {
         var dist_tl = this.tl.dist(other.tl);
         var dist_tr = this.tr.dist(other.tr);
         var dist_bl = this.bl.dist(other.bl);
         var dist_br = this.br.dist(other.br);
+        return (dist_tl + dist_tr + dist_bl + dist_br) / 4;
     }
 
-    function contains(pt: Point) {
+    function contains(pt: Point): Bool {
         return (pt.x >= this.x - this.w &&
                 pt.x <= this.x + this.w &&
                 pt.y >= this.y - this.h &&
                 pt.y <= this.y + this.h);
     }
 
-    function intersects(other: Rect) {
+    function intersects(other: Rect): Bool {
         return !(other.x - other.w > this.x + this.w ||
                  other.x + other.w < this.x - this.w ||
                  other.y - other.h > this.y + this.h ||
                  other.y + other.h < this.y - this.h);
     }
 
-    function print() {
+    function print(): Void {
         this.tl.print();
         printf(", ");
         this.tr.print();
@@ -123,18 +134,25 @@ struct Circle {
     var y: Float;
     var r: Float;
     var rSquared: Float;
+    var center: Point;
 
-    static function new(x: Float, y: Float, r: Float) {
+    static function new(x: Float, y: Float, r: Float): Circle {
         var rSquared = r * r;
         return struct Self {
             x,
             y,
             r,
-            rSquared
+            rSquared,
+            center: Point.new(x, y)
         };
     }
 
-    function contains(pt: Point) {
+    function dist(other: Circle): Float {
+        var dist = this.center.dist(other.center);
+        return (dist - this.r) - other.r;
+    }
+
+    function contains(pt: Point): Bool {
         // check if the point is in the circle by checking if the euclidean distance of
         // the point and the center of the circle if smaller or equal to the radius of
         // the circle
@@ -142,7 +160,7 @@ struct Circle {
         return d <= this.rSquared;
     }
 
-    function intersects(other: Rect) {
+    function intersects(other: Rect): Bool {
 
         var xDist: Float = absF(other.x - this.x);
         var yDist: Float = absF(other.y - this.y);
@@ -163,6 +181,12 @@ struct Circle {
 
         // intersection on the edge of the circle
         return edges <= this.rSquared;
+    }
+
+
+    function print(): Void {
+        this.center.print();
+        printf(", ⌀%f\n", this.r);
     }
 }
 
@@ -301,33 +325,55 @@ struct QuadTree {
         return false;
     }
 
-    function query(range: Rect, found: Vector) {
-        if (!range.intersects(this.boundary)) {
+    function query(boundary: Rect) {
+        if (!boundary.intersects(this.boundary)) {
             return Vector.new();
         }
 
+        var found: Vector = Vector.new();
+
         for p in this.points {
-            if (range.contains(p)) {
+            if (boundary.contains(p)) {
                 found.push(p);
             }
         }
 
         if (this.divided) {
-            var tl = this.topleft.query(range, found);
+            var tl: Vector = this.topleft.query(boundary);
             if (tl.length != 0) {
-                return tl;
+                for m in 0 ... tl.length {
+                    if tl[m].initialized {
+                        found.push(tl[m]);
+                        // tl[m].print(true, " tl\n");
+                    }
+                }
             }
-            var tr = this.topright.query(range, found);
+            var tr: Vector = this.topright.query(boundary);
             if (tr.length != 0) {
-                return tr;
+                for m in 0 ... tr.length {
+                    if tr[m].initialized {
+                        found.push(tr[m]);
+                        // tr[m].print(true, " tr\n");
+                    }
+                }
             }
-            var bl = this.bottomleft.query(range, found);
+            var bl: Vector = this.bottomleft.query(boundary);
             if (bl.length != 0) {
-                return bl;
+                for m in 0 ... bl.length {
+                    if bl[m].initialized {
+                        found.push(bl[m]);
+                        // bl[m].print(true, " bl\n");
+                    }
+                }
             }
-            var br = this.bottomright.query(range, found);
+            var br: Vector = this.bottomright.query(boundary);
             if (br.length != 0) {
-                return br;
+                for m in 0 ... br.length {
+                    if br[m].initialized {
+                        found.push(br[m]);
+                        // br[m].print(true, " br\n");
+                    }
+                }
             }
         }
         return found;
@@ -385,8 +431,22 @@ function main() {
     var canvas = Rect.new(0, 0, 20, 20);
     var qtree: QuadTree = QuadTree.new(canvas, 4);
     // qtree.boundary.print();
-    for n in 0 ... 30 {
+    for n in 0 ... 50 {
         qtree.insert(Point.new(randF(0, 20), randF(0, 20)));
     }
+    // qtree.insert(Point.new(1, 1));
+    // qtree.insert(Point.new(2, 14));
+    // qtree.insert(Point.new(7, 5));
+    // qtree.insert(Point.new(3, 2));
+    // qtree.insert(Point.new(2, 3));
+    // qtree.insert(Point.new(2, 5));
+    // qtree.insert(Point.new(8, 13));
+    // qtree.insert(Point.new(6, 1));
     qtree.debugValues();
+    var select = Rect.new(0, 0, 5, 5);
+    var selected: Vector = qtree.query(select);
+    printf("\n");
+    for m in 0 ... selected.length {
+        selected[m].print(true, "\n");
+    }
 }
