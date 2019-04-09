@@ -10,6 +10,8 @@ import kit.math;
 include "string.h";
 include "time.h";
 include "stdlib.h";
+include "stdio.h";
+include "math.h";
 // var count: Int = 0;
 
 
@@ -37,6 +39,68 @@ function randF(lower: Float, upper: Float) {
 }
 
 
+const pi: Float = 3.14159265358979;
+
+function sign(x: Float): Float {
+    if (x < 0) {
+        return -1;
+    }
+    if (x > 0) {
+        return 1;
+    }
+    return 0;
+}
+
+// cotangent
+function cot(x: Float): Float {
+    return tan(pi/2 - x);
+}
+
+
+function radian_PosNeg_To_0to2pi(angle: Float) {
+    if (angle < 0) {
+        return (2 * pi) - angle;
+    } else {
+        return angle;
+    }
+}
+
+
+function rectDist(angle: Float, rect: Rect): Float {
+    // angle should be within [0, 2*pi) range
+    // x and y point to the _middle_ of the rectangle
+    var x: Float = rect.center.x;
+    var y: Float = rect.center.y;
+    var width: Float = rect.w;
+    var height: Float = rect.h;
+    var base_angle: Float = atan(height/width);
+    // the angle between rectangle diagonal and Ox axis
+    var px: Float;
+    var py: Float;
+    // Which side we're on?
+    var left: Bool = (fabs(angle - pi) < base_angle);
+    var right: Bool = (angle > 2 * pi-base_angle || angle < base_angle);
+    var top: Bool = (fabs(angle - pi / 2) <= fabs(pi / 2 - base_angle));
+    var bottom: Bool = (fabs(angle - 3 * pi / 2) <= fabs(pi / 2 - base_angle));
+    // The helper values used to adjust sides
+    var lr: Int = (if left then -1 else 0) + (if right then 1 else 0);
+    var tb: Int = (if bottom then -1 else 0) + (if top then 1 else 0);
+    if (lr != 0) {
+                    // we're on vertical edge of rectangle
+                    px = x + width / 2 * lr;
+                    py = y + width / 2 * tan(angle) * lr;
+    } else {
+                    // we're on the horizontal edge or in the corner
+                    px = x + height / 2 * cot(angle) * tb;
+                    py = y + height / 2 * tb;
+    }
+    return sqrtf((px - x) * (px - x)
+                +
+                (py - y) * (py - y)
+                );
+}
+
+
 struct Point {
     var x: Float;
     var y: Float;
@@ -50,8 +114,8 @@ struct Point {
         };
     }
 
-    function dist(other: Point) {
-        return sqrt((this.x - other.x) * (this.x - other.x)
+    function dist(other: Point): Float {
+        return sqrtf((this.x - other.x) * (this.x - other.x)
                     +
                     (this.y - other.y) * (this.y - other.y)
                     );
@@ -68,6 +132,28 @@ struct Point {
             }
         }
     }
+
+    rules {
+        (${one: Point} - ${two: Point}) => Point.new($one.x - $two.x, $one.y - $two.y);
+        (${one: Point} + ${two: Point}) => Point.new($one.x + $two.x, $one.y + $two.y);
+        (${one: Point} * ${two: Point}) => Point.new($one.x * $two.x, $one.y * $two.y);
+        (${one: Point} / ${two: Point}) => Point.new($one.x / $two.x, $one.y / $two.y);
+        (${one: Point} % ${two: Point}) => Point.new($one.x % $two.x, $one.y % $two.y);
+        (${one: Point} ** ${two: Point}) => Point.new(pow($one.x, $two.x), pow($one.y, $two.y));
+        (atan2(${pt: Point})) => atan2($pt.x, $pt.y);
+    }
+}
+
+
+trait Bound {
+    function dist(other: Box[Bound]): Float;
+    function contains(pt: Point): Bool;
+    function intersects(other: Box[Bound]): Bool;
+    function print(): Void;
+    function type(): CString;
+    public function base(): Ptr[Void]{
+        return &this;
+    }
 }
 
 
@@ -82,6 +168,8 @@ struct Rect {
     var bl: Point;
     var br: Point;
 
+    var center: Point;
+
     static function new(x: Float, y: Float, w: Float, h: Float): Rect {
         return struct Self {
             x,
@@ -91,18 +179,17 @@ struct Rect {
             tl: Point.new(x,     y    ),
             tr: Point.new(x + w, y    ),
             bl: Point.new(x,     y + h),
-            br: Point.new(x + w, y + h)
+            br: Point.new(x + w, y + h),
+            center: Point.new(x + (w / 2), y + (h / 2))
         };
     }
 
-    function dist(other: Rect): Float {
-        var dist_tl = this.tl.dist(other.tl);
-        var dist_tr = this.tr.dist(other.tr);
-        var dist_bl = this.bl.dist(other.bl);
-        var dist_br = this.br.dist(other.br);
-        return (dist_tl + dist_tr + dist_bl + dist_br) / 4;
+    public function base(): Ptr[Void]{
+        return &this;
     }
+}
 
+implement Bound for Rect {
     function contains(pt: Point): Bool {
         return (pt.x >= this.x - this.w &&
                 pt.x <= this.x + this.w &&
@@ -110,11 +197,33 @@ struct Rect {
                 pt.y <= this.y + this.h);
     }
 
-    function intersects(other: Rect): Bool {
-        return !(other.x - other.w > this.x + this.w ||
-                 other.x + other.w < this.x - this.w ||
-                 other.y - other.h > this.y + this.h ||
-                 other.y + other.h < this.y - this.h);
+    function dist(other: Box[Bound]): Float {
+        if other.type() == "rect" {
+            var otherRect = other.base() as Ptr[Rect];
+            var angle_thisToOther = radian_PosNeg_To_0to2pi(atan2(this.center - otherRect.center));
+            var angle_otherToThis = radian_PosNeg_To_0to2pi(atan2(otherRect.center - this.center));
+            var dist_tl = this.tl.dist(otherRect.tl);
+            var dist_tr = this.tr.dist(otherRect.tr);
+            var dist_bl = this.bl.dist(otherRect.bl);
+            var dist_br = this.br.dist(otherRect.br);
+            return (dist_tl + dist_tr + dist_bl + dist_br) / 4;
+        }
+        if other.type() == "circle" {
+            var otherCircle: Ptr[Circle] = other.base() as Ptr[Circle];
+            var thisRect: Ptr[Rect] = this.base() as Ptr[Rect];
+            var angle_thisToOther = radian_PosNeg_To_0to2pi(atan2(thisRect.center - otherCircle.center));
+            // var angle_otherToThis = radian_PosNeg_To_0to2pi(atan2(otherCircle.center - thisRect.center));
+            var dist = thisRect.center.dist(otherCircle.center);
+            return (dist - otherCircle.r) - rectDist(angle_thisToOther, thisRect);
+        }
+    }
+
+    function intersects(other: Box[Bound]): Bool {
+        var otherRect: Ptr[Rect] = other.base() as Ptr[Rect];
+        return !(otherRect.x - otherRect.w > this.x + this.w ||
+                otherRect.x + otherRect.w < this.x - this.w ||
+                otherRect.y - otherRect.h > this.y + this.h ||
+                otherRect.y + otherRect.h < this.y - this.h);
     }
 
     function print(): Void {
@@ -126,6 +235,10 @@ struct Rect {
         printf(", ");
         this.br.print();
         printf("\n");
+    }
+
+    function type() {
+        return "rect";
     }
 }
 
@@ -147,21 +260,7 @@ struct Circle {
         };
     }
 
-    function dist(other: Circle): Float {
-        var dist = this.center.dist(other.center);
-        return (dist - this.r) - other.r;
-    }
-
-    function contains(pt: Point): Bool {
-        // check if the point is in the circle by checking if the euclidean distance of
-        // the point and the center of the circle if smaller or equal to the radius of
-        // the circle
-        var d: Float = (pt.x - this.x) * (pt.x - this.x) + (pt.y - this.y) * (pt.y - this.y);
-        return d <= this.rSquared;
-    }
-
-    function intersects(other: Rect): Bool {
-
+    function intersectsRect(other: Rect) {
         var xDist: Float = absF(other.x - this.x);
         var yDist: Float = absF(other.y - this.y);
         var r: Float = this.r;
@@ -183,29 +282,64 @@ struct Circle {
         return edges <= this.rSquared;
     }
 
+    function intersectsCircle(other: Circle) {
+        var dist = this.center.dist(other.center);
+        if (dist - this.r) - other.r < 0 {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function base(): Ptr[Void]{
+        return &this;
+    }
+}
+
+implement Bound for Circle {
+    function contains(pt: Point): Bool {
+        // check if the point is in the circle by checking if the euclidean distance of
+        // the point and the center of the circle if smaller or equal to the radius of
+        // the circle
+        var d: Float = (pt.x - this.x) * (pt.x - this.x) + (pt.y - this.y) * (pt.y - this.y);
+        return d <= this.rSquared;
+    }
+
+    function dist(other: Box[Bound]): Float {
+        if other.type() == "rect" {
+            var otherRect: Ptr[Rect] = other.base() as Ptr[Rect];
+            var thisCircle: Ptr[Circle] = this.base() as Ptr[Circle];
+            var angle_thisToOther = radian_PosNeg_To_0to2pi(atan2(thisCircle.center - otherRect.center));
+            // var angle_otherToThis = radian_PosNeg_To_0to2pi(atan2(otherRect.center - thisCircle.center));
+            var dist = thisCircle.center.dist(otherRect.center);
+            return (dist - thisCircle.r) - rectDist(angle_thisToOther, otherRect);
+        }
+        if other.type() == "circle" {
+            var otherCircle: Ptr[Circle] = other.base() as Ptr[Circle];
+            var dist = this.center.dist(otherCircle.center);
+            return (dist - this.r) - otherCircle.r;
+        }
+    }
+
+    function intersects(other: Box[Bound]): Bool {
+        if other.type() == "rect" {
+            return this.intersectsRect(other.base() as Ptr[Rect]);
+        }
+        if other.type() == "circle" {
+            return this.intersectsCircle(other.base() as Ptr[Circle]);
+        }
+    }
+
 
     function print(): Void {
         this.center.print();
         printf(", ⌀%f\n", this.r);
     }
+
+    function type() {
+        return "circle";
+    }
 }
-
-
-// struct Children {
-//     var topright: QuadTree;
-//     var topleft: QuadTree;
-//     var bottomright: QuadTree;
-//     var bottomleft: QuadTree;
-
-//     static function new(topright: QuadTree, topleft: QuadTree, bottomright: QuadTree, bottomleft: QuadTree) {
-//         return struct Self {
-//             topright,
-//             topleft,
-//             bottomright,
-//             bottomleft
-//         };
-//     }
-// }
 
 
 struct QuadTree {
@@ -246,18 +380,6 @@ struct QuadTree {
         var br: Rect = Rect.new(x + w, y + h, w, h);
         var bl: Rect = Rect.new(x,     y + h, w, h);
 
-        // printf("--\n");
-        // tr.print();
-        // tl.print();
-        // br.print();
-        // bl.print();
-        // printf("--\n");
-
-        // var topright: QuadTree = QuadTree.new(tr, this.capacity);
-        // var topleft: QuadTree = QuadTree.new(tl, this.capacity);
-        // var bottomright: QuadTree = QuadTree.new(br, this.capacity);
-        // var bottomleft: QuadTree = QuadTree.new(bl, this.capacity);
-
         this.topright = malloc(sizeof QuadTree);
         this.topleft = malloc(sizeof QuadTree);
         this.bottomright = malloc(sizeof QuadTree);
@@ -268,19 +390,12 @@ struct QuadTree {
         *this.bottomright = QuadTree.new(br, this.capacity);
         *this.bottomleft = QuadTree.new(bl, this.capacity);
 
-        // this.children = struct Children {
-        //     topleft,
-        //     topright,
-        //     bottomright,
-        //     bottomleft
-        // };
-
         this.divided = true;
     }
 
     function insert(pt: Point) {
         // this.boundary.print();
-        if (!this.boundary.contains(pt)) {  // <- in this function call
+        if (!this.boundary.Bound.contains(pt)) {  // <- in this function call
             // printf("not in\n");
             return false;
         } else {
@@ -325,7 +440,7 @@ struct QuadTree {
         return false;
     }
 
-    function query(boundary: Rect) {
+    function query(boundary: Box[Bound]): Vector[Point] {
         if (!boundary.intersects(this.boundary)) {
             return Vector.new();
         }
@@ -339,7 +454,7 @@ struct QuadTree {
         }
 
         if (this.divided) {
-            var tl: Vector = this.topleft.query(boundary);
+            var tl: Vector[Point] = this.topleft.query(boundary);
             if (tl.length != 0) {
                 for m in 0 ... tl.length {
                     if tl[m].initialized {
@@ -348,7 +463,7 @@ struct QuadTree {
                     }
                 }
             }
-            var tr: Vector = this.topright.query(boundary);
+            var tr: Vector[Point] = this.topright.query(boundary);
             if (tr.length != 0) {
                 for m in 0 ... tr.length {
                     if tr[m].initialized {
@@ -357,7 +472,7 @@ struct QuadTree {
                     }
                 }
             }
-            var bl: Vector = this.bottomleft.query(boundary);
+            var bl: Vector[Point] = this.bottomleft.query(boundary);
             if (bl.length != 0) {
                 for m in 0 ... bl.length {
                     if bl[m].initialized {
@@ -366,7 +481,7 @@ struct QuadTree {
                     }
                 }
             }
-            var br: Vector = this.bottomright.query(boundary);
+            var br: Vector[Point] = this.bottomright.query(boundary);
             if (br.length != 0) {
                 for m in 0 ... br.length {
                     if br[m].initialized {
@@ -378,13 +493,6 @@ struct QuadTree {
         }
         return found;
     }
-
-    // rules {
-    //     ($this.topright) => $this.children.topright;
-    //     ($this.topleft) => $this.children.topleft;
-    //     ($this.bottomright) => $this.children.bottomright;
-    //     ($this.bottomleft) => $this.children.bottomleft;
-    // }
 
     function debugDivided(prefix: CString = "") {
         if this.divided {
@@ -443,10 +551,18 @@ function main() {
     // qtree.insert(Point.new(8, 13));
     // qtree.insert(Point.new(6, 1));
     qtree.debugValues();
-    var select = Rect.new(0, 0, 5, 5);
-    var selected: Vector = qtree.query(select);
+    var select = Rect.new(0, 0, 7, 7);
+    var selected: Vector[Point] = qtree.query(select);
     printf("\n");
-    for m in 0 ... selected.length {
-        selected[m].print(true, "\n");
+    printf("%zu\n", selected.length);
+    // printf(selected);
+    for m in selected {
+        m.print(true, "\n");
+    }
+    var select2 = Circle.new(10, 10, 4);
+    var selected2: Vector = qtree.query(select2);
+    printf("\n");
+    for p in 0 ... selected2.length {
+        selected2[p].print(true, "\n");
     }
 }
