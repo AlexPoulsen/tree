@@ -15,41 +15,7 @@ include "math.h";
 
 import helperfunctions;
 import point;
-
-
-function rectDist(angle: Float, rect: Rect): Float {
-    // angle should be within [0, 2*pi) range
-    // x and y point to the _middle_ of the rectangle
-    var x: Float = rect.center.x;
-    var y: Float = rect.center.y;
-    var width: Float = rect.w;
-    var height: Float = rect.h;
-    var base_angle: Float = atan(height/width);
-    // the angle between rectangle diagonal and Ox axis
-    var px: Float;
-    var py: Float;
-    // Which side we're on?
-    var left: Bool = (fabs(angle - pi) < base_angle);
-    var right: Bool = (angle > 2 * pi-base_angle || angle < base_angle);
-    var top: Bool = (fabs(angle - pi / 2) <= fabs(pi / 2 - base_angle));
-    var bottom: Bool = (fabs(angle - 3 * pi / 2) <= fabs(pi / 2 - base_angle));
-    // The helper values used to adjust sides
-    var lr: Int = (if left then -1 else 0) + (if right then 1 else 0);
-    var tb: Int = (if bottom then -1 else 0) + (if top then 1 else 0);
-    if (lr != 0) {
-                    // we're on vertical edge of rectangle
-                    px = x + width / 2 * lr;
-                    py = y + width / 2 * tan(angle) * lr;
-    } else {
-                    // we're on the horizontal edge or in the corner
-                    px = x + height / 2 * cot(angle) * tb;
-                    py = y + height / 2 * tb;
-    }
-    return sqrtf((px - x) * (px - x)
-                +
-                (py - y) * (py - y)
-                );
-}
+import rect;
 
 
 trait Bound {
@@ -58,39 +24,6 @@ trait Bound {
     function intersects(other: Box[Bound]): Bool;
     function print(): Void;
     function type(): CString;
-    public function base(): Ptr[Void]{
-        return &this;
-    }
-}
-
-
-struct Rect {
-    var x: Float;
-    var y: Float;
-    var w: Float;
-    var h: Float;
-
-    var tl: Point;
-    var tr: Point;
-    var bl: Point;
-    var br: Point;
-
-    var center: Point;
-
-    static function new(x: Float, y: Float, w: Float, h: Float): Rect {
-        return struct Self {
-            x,
-            y,
-            w,
-            h,
-            tl: Point.new(x,     y    ),
-            tr: Point.new(x + w, y    ),
-            bl: Point.new(x,     y + h),
-            br: Point.new(x + w, y + h),
-            center: Point.new(x + (w / 2), y + (h / 2))
-        };
-    }
-
     public function base(): Ptr[Void]{
         return &this;
     }
