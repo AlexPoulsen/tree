@@ -16,6 +16,7 @@ include "math.h";
 import helperfunctions;
 import point;
 import rect;
+import circle;
 
 
 trait Bound {
@@ -79,60 +80,6 @@ implement Bound for Rect {
 
     function type() {
         return "rect";
-    }
-}
-
-struct Circle {
-    var x: Float;
-    var y: Float;
-    var r: Float;
-    var rSquared: Float;
-    var center: Point;
-
-    static function new(x: Float, y: Float, r: Float): Circle {
-        var rSquared = r * r;
-        return struct Self {
-            x,
-            y,
-            r,
-            rSquared,
-            center: Point.new(x, y)
-        };
-    }
-
-    function intersectsRect(other: Rect) {
-        var xDist: Float = absF(other.x - this.x);
-        var yDist: Float = absF(other.y - this.y);
-        var r: Float = this.r;
-        var w: Float = other.w;
-        var h: Float = other.h;
-
-        var edges: Float = (xDist - w) * (xDist - w) + (yDist - h) * (yDist - h);
-
-        if (xDist > (r + w) || yDist > (r + h)) {
-            return false;
-        }
-
-        // intersection within the circle
-        if (xDist <= w || yDist <= h) {
-            return true;
-        }
-
-        // intersection on the edge of the circle
-        return edges <= this.rSquared;
-    }
-
-    function intersectsCircle(other: Circle) {
-        var dist = this.center.dist(other.center);
-        if (dist - this.r) - other.r < 0 {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public function base(): Ptr[Void]{
-        return &this;
     }
 }
 
