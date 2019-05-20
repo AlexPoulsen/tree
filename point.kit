@@ -50,3 +50,52 @@ struct Point2d {
         (atan2(${pt: Point2d})) => atan2($pt.x, $pt.y);
     }
 }
+
+
+struct Point3d {
+    var x: Float;
+    var y: Float;
+    var z: Float;
+    var initialized: Bool = false;
+
+    static function new(x: Float, y: Float, z: Float) {
+        return struct Self {
+            x,
+            y,
+            z,
+            initialized: true
+        };
+    }
+
+    function dist(other: Point3d): Float {
+        return sqrtf((this.x - other.x) * (this.x - other.x)
+                    +
+                    (this.y - other.y) * (this.y - other.y)
+                    +
+                    (this.z - other.z) * (this.z - other.z)
+                    );
+    }
+
+    function print(printUnInit: Bool = true, append: CString = "") {
+        if this.initialized {
+            printf("(%f, %f, %f)", this.x, this.y, this.z);
+            printf("%s", append);
+        } else {
+            if printUnInit {
+                printf("(-.---, -.---, -.---)");
+                printf("%s", append);
+            }
+        }
+    }
+
+    rules {
+        (${one: Point3d} - ${two: Point3d}) => Point3d.new($one.x - $two.x, $one.y - $two.y, $one.z - $two.z);
+        (${one: Point3d} + ${two: Point3d}) => Point3d.new($one.x + $two.x, $one.y + $two.y, $one.z + $two.z);
+        (${one: Point3d} * ${two: Point3d}) => Point3d.new($one.x * $two.x, $one.y * $two.y, $one.z * $two.z);
+        (${one: Point3d} / ${two: Point3d}) => Point3d.new($one.x / $two.x, $one.y / $two.y, $one.z / $two.z);
+        (${one: Point3d} % ${two: Point3d}) => Point3d.new($one.x % $two.x, $one.y % $two.y, $one.z % $two.z);
+        (${one: Point3d} ** ${two: Point3d}) => Point3d.new(pow($one.x, $two.x), pow($one.y, $two.y), pow($one.z, $two.z));
+        // (atan3(${pt: Point3d})) => atan3($pt.x, $pt.y, $pt.z);
+        // TODO write atan3
+    }
+}
