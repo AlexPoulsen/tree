@@ -25,7 +25,7 @@ function absF(n: Float) {
 
 
 function strAdd(one: CString, two: CString) {
-    var out = malloc(one.length + two.length);
+    var out = malloc(one.length + two.length + 1);
     strcpy(out, one);
     strcat(out, two);
     return out;
