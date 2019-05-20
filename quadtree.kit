@@ -26,7 +26,7 @@ struct QuadTree {
     var capacity: Int;
     var points: Array;
     var divided: Bool;
-    var insertPoint: Int = 0;
+    var insertPoint2d: Int = 0;
     // var children: Children;
     var topright: Ptr[QuadTree];
     var topleft: Ptr[QuadTree];
@@ -44,7 +44,7 @@ struct QuadTree {
             capacity,
             points: Array.new(capacity),
             divided: false,
-            insertPoint: 0
+            insertPoint2d: 0
         };
     }
 
@@ -72,20 +72,20 @@ struct QuadTree {
         this.divided = true;
     }
 
-    function insert(pt: Point) {
+    function insert(pt: Point2d) {
         // this.boundary.print();
         if (!this.boundary.Bound.contains(pt)) {  // <- in this function call
             // printf("not in\n");
             return false;
         } else {
             // printf("in\n");
-            if (this.insertPoint < this.capacity) {
+            if (this.insertPoint2d < this.capacity) {
                 // pt.print();
-                this.points[this.insertPoint] = pt;
-                // this.points[this.insertPoint].print();
+                this.points[this.insertPoint2d] = pt;
+                // this.points[this.insertPoint2d].print();
                 this.hasBeenInserted = true;
                 // printf(if this.hasBeenInserted then "true\n" else "false\n");
-                this.insertPoint++;
+                this.insertPoint2d++;
                 // printf("inserted\n");
                 return true;
             } else {
@@ -119,7 +119,7 @@ struct QuadTree {
         return false;
     }
 
-    function query(boundary: Box[Bound]): Vector[Point] {
+    function query(boundary: Box[Bound]): Vector[Point2d] {
         if (!boundary.intersects(this.boundary)) {
             return Vector.new();
         }
@@ -133,7 +133,7 @@ struct QuadTree {
         }
 
         if (this.divided) {
-            var tl: Vector[Point] = this.topleft.query(boundary);
+            var tl: Vector[Point2d] = this.topleft.query(boundary);
             if (tl.length != 0) {
                 for m in 0 ... tl.length {
                     if tl[m].initialized {
@@ -142,7 +142,7 @@ struct QuadTree {
                     }
                 }
             }
-            var tr: Vector[Point] = this.topright.query(boundary);
+            var tr: Vector[Point2d] = this.topright.query(boundary);
             if (tr.length != 0) {
                 for m in 0 ... tr.length {
                     if tr[m].initialized {
@@ -151,7 +151,7 @@ struct QuadTree {
                     }
                 }
             }
-            var bl: Vector[Point] = this.bottomleft.query(boundary);
+            var bl: Vector[Point2d] = this.bottomleft.query(boundary);
             if (bl.length != 0) {
                 for m in 0 ... bl.length {
                     if bl[m].initialized {
@@ -160,7 +160,7 @@ struct QuadTree {
                     }
                 }
             }
-            var br: Vector[Point] = this.bottomright.query(boundary);
+            var br: Vector[Point2d] = this.bottomright.query(boundary);
             if (br.length != 0) {
                 for m in 0 ... br.length {
                     if br[m].initialized {
@@ -219,19 +219,19 @@ function main() {
     var qtree: QuadTree = QuadTree.new(canvas, 4);
     // qtree.boundary.print();
     for n in 0 ... 50 {
-        qtree.insert(Point.new(randF(0, 20), randF(0, 20)));
+        qtree.insert(Point2d.new(randF(0, 20), randF(0, 20)));
     }
-    // qtree.insert(Point.new(1, 1));
-    // qtree.insert(Point.new(2, 14));
-    // qtree.insert(Point.new(7, 5));
-    // qtree.insert(Point.new(3, 2));
-    // qtree.insert(Point.new(2, 3));
-    // qtree.insert(Point.new(2, 5));
-    // qtree.insert(Point.new(8, 13));
-    // qtree.insert(Point.new(6, 1));
+    // qtree.insert(Point2d.new(1, 1));
+    // qtree.insert(Point2d.new(2, 14));
+    // qtree.insert(Point2d.new(7, 5));
+    // qtree.insert(Point2d.new(3, 2));
+    // qtree.insert(Point2d.new(2, 3));
+    // qtree.insert(Point2d.new(2, 5));
+    // qtree.insert(Point2d.new(8, 13));
+    // qtree.insert(Point2d.new(6, 1));
     qtree.debugValues();
     // var select = Rect.new(0, 0, 7, 7);
-    // var selected: Vector[Point] = qtree.query(select);
+    // var selected: Vector[Point2d] = qtree.query(select);
     // printf("\n");
     // printf("%zu\n", selected.length);
     // // printf(selected);

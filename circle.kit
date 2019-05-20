@@ -17,7 +17,7 @@ struct Circle {
     var y: Float;
     var r: Float;
     var rSquared: Float;
-    var center: Point;
+    var center: Point2d;
 
     static function new(x: Float, y: Float, r: Float): Circle {
         var rSquared = r * r;
@@ -26,7 +26,7 @@ struct Circle {
             y,
             r,
             rSquared,
-            center: Point.new(x, y)
+            center: Point2d.new(x, y)
         };
     }
 

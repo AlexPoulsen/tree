@@ -53,12 +53,12 @@ struct Rect {
     var w: Float;
     var h: Float;
 
-    var tl: Point;
-    var tr: Point;
-    var bl: Point;
-    var br: Point;
+    var tl: Point2d;
+    var tr: Point2d;
+    var bl: Point2d;
+    var br: Point2d;
 
-    var center: Point;
+    var center: Point2d;
 
     var line_tl_tr: Line;
     var line_tr_bl: Line;
@@ -66,10 +66,10 @@ struct Rect {
     var line_br_tl: Line;
 
     static function new(x: Float, y: Float, w: Float, h: Float): Rect {
-        var tl: Point = Point.new(x,     y    );
-        var tr: Point = Point.new(x + w, y    );
-        var bl: Point = Point.new(x,     y + h);
-        var br: Point = Point.new(x + w, y + h);
+        var tl: Point2d = Point2d.new(x,     y    );
+        var tr: Point2d = Point2d.new(x + w, y    );
+        var bl: Point2d = Point2d.new(x,     y + h);
+        var br: Point2d = Point2d.new(x + w, y + h);
         return struct Self {
             x,
             y,
@@ -79,11 +79,11 @@ struct Rect {
             tr,
             bl,
             br,
-            center: Point.new(x + (w / 2), y + (h / 2)),
-            line_tl_tr: Line.newFromPoints(tl, tr),
-            line_tr_bl: Line.newFromPoints(tr, bl),
-            line_bl_br: Line.newFromPoints(bl, br),
-            line_br_tl: Line.newFromPoints(br, tl)
+            center: Point2d.new(x + (w / 2), y + (h / 2)),
+            line_tl_tr: Line.newFromPoint2ds(tl, tr),
+            line_tr_bl: Line.newFromPoint2ds(tr, bl),
+            line_bl_br: Line.newFromPoint2ds(bl, br),
+            line_br_tl: Line.newFromPoint2ds(br, tl)
         };
     }
 

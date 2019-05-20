@@ -14,7 +14,7 @@ import line;
 
 trait Bound {
     function dist(other: Box[Bound]): Float;
-    function contains(pt: Point): Bool;
+    function contains(pt: Point2d): Bool;
     function intersects(other: Box[Bound]): Bool;
     function print(): Void;
     function type(): CString;
@@ -24,7 +24,7 @@ trait Bound {
 }
 
 implement Bound for Rect {
-    function contains(pt: Point): Bool {
+    function contains(pt: Point2d): Bool {
         return (pt.x >= this.x - this.w &&
                 pt.x <= this.x + this.w &&
                 pt.y >= this.y - this.h &&
@@ -52,10 +52,10 @@ implement Bound for Rect {
         }
         if other.type() == "line" {
             var o: Ptr[Line] = other.base() as Ptr[Line];
-            var a: Float = min(distPointToLine(o, this.tl), distPointToLine(o, this.tr));
-            var b: Float = min(distPointToLine(o, this.tr), distPointToLine(o, this.bl));
-            var c: Float = min(distPointToLine(o, this.bl), distPointToLine(o, this.br));
-            var d: Float = min(distPointToLine(o, this.br), distPointToLine(o, this.tl));
+            var a: Float = min(distPoint2dToLine(o, this.tl), distPoint2dToLine(o, this.tr));
+            var b: Float = min(distPoint2dToLine(o, this.tr), distPoint2dToLine(o, this.bl));
+            var c: Float = min(distPoint2dToLine(o, this.bl), distPoint2dToLine(o, this.br));
+            var d: Float = min(distPoint2dToLine(o, this.br), distPoint2dToLine(o, this.tl));
             return min(min(a, b), min(c, d));
         }
     }
@@ -97,7 +97,7 @@ implement Bound for Rect {
 }
 
 implement Bound for Circle {
-    function contains(pt: Point): Bool {
+    function contains(pt: Point2d): Bool {
         // check if the point is in the circle by checking if the euclidean distance of
         // the point and the center of the circle if smaller or equal to the radius of
         // the circle
@@ -121,7 +121,7 @@ implement Bound for Circle {
         }
         if other.type() == "line" {
             var o: Ptr[Line] = other.base() as Ptr[Line];
-            return distPointToLine(o, this.center);
+            return distPoint2dToLine(o, this.center);
         }
     }
 
@@ -134,7 +134,7 @@ implement Bound for Circle {
         }
         if other.type() == "line" {
             var o: Ptr[Line] = other.base() as Ptr[Line];
-            return this.r <= distPointToLine(o, this.center);
+            return this.r <= distPoint2dToLine(o, this.center);
         }
     }
 
@@ -150,26 +150,26 @@ implement Bound for Circle {
 }
 
 implement Bound for Line {
-    function contains(pt: Point): Bool {
-        return distPointToLine(this, pt) < 0.00001;
+    function contains(pt: Point2d): Bool {
+        return distPoint2dToLine(this, pt) < 0.00001;
     }
 
     function dist(other: Box[Bound]): Float {
         if other.type() == "rect" {
             var o: Ptr[Rect] = other.base() as Ptr[Rect];
-            var a: Float = min(distPointToLine(this, o.tl), distPointToLine(this, o.tr));
-            var b: Float = min(distPointToLine(this, o.tr), distPointToLine(this, o.bl));
-            var c: Float = min(distPointToLine(this, o.bl), distPointToLine(this, o.br));
-            var d: Float = min(distPointToLine(this, o.br), distPointToLine(this, o.tl));
+            var a: Float = min(distPoint2dToLine(this, o.tl), distPoint2dToLine(this, o.tr));
+            var b: Float = min(distPoint2dToLine(this, o.tr), distPoint2dToLine(this, o.bl));
+            var c: Float = min(distPoint2dToLine(this, o.bl), distPoint2dToLine(this, o.br));
+            var d: Float = min(distPoint2dToLine(this, o.br), distPoint2dToLine(this, o.tl));
             return min(min(a, b), min(c, d));
         }
         if other.type() == "circle" {
             var o: Ptr[Circle] = other.base() as Ptr[Circle];
-            return distPointToLine(this, o.center);
+            return distPoint2dToLine(this, o.center);
         }
         if other.type() == "line" {
             var o: Ptr[Line] = other.base() as Ptr[Line];
-            return min(distPointToLine(this, o.p1), distPointToLine(this, o.p2));
+            return min(distPoint2dToLine(this, o.p1), distPoint2dToLine(this, o.p2));
         }
     }
 
@@ -183,7 +183,7 @@ implement Bound for Line {
         }
         if other.type() == "circle" {
             var o: Ptr[Circle] = other.base() as Ptr[Circle];
-            return o.r <= distPointToLine(this, o.center);
+            return o.r <= distPoint2dToLine(this, o.center);
         }
         if other.type() == "line" {
             return lineIntersection(this, other.base() as Ptr[Line]);

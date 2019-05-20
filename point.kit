@@ -8,7 +8,7 @@ include "math.h";
 import helperfunctions;
 
 
-struct Point {
+struct Point2d {
     var x: Float;
     var y: Float;
     var initialized: Bool = false;
@@ -21,7 +21,7 @@ struct Point {
         };
     }
 
-    function dist(other: Point): Float {
+    function dist(other: Point2d): Float {
         return sqrtf((this.x - other.x) * (this.x - other.x)
                     +
                     (this.y - other.y) * (this.y - other.y)
@@ -41,12 +41,12 @@ struct Point {
     }
 
     rules {
-        (${one: Point} - ${two: Point}) => Point.new($one.x - $two.x, $one.y - $two.y);
-        (${one: Point} + ${two: Point}) => Point.new($one.x + $two.x, $one.y + $two.y);
-        (${one: Point} * ${two: Point}) => Point.new($one.x * $two.x, $one.y * $two.y);
-        (${one: Point} / ${two: Point}) => Point.new($one.x / $two.x, $one.y / $two.y);
-        (${one: Point} % ${two: Point}) => Point.new($one.x % $two.x, $one.y % $two.y);
-        (${one: Point} ** ${two: Point}) => Point.new(pow($one.x, $two.x), pow($one.y, $two.y));
-        (atan2(${pt: Point})) => atan2($pt.x, $pt.y);
+        (${one: Point2d} - ${two: Point2d}) => Point2d.new($one.x - $two.x, $one.y - $two.y);
+        (${one: Point2d} + ${two: Point2d}) => Point2d.new($one.x + $two.x, $one.y + $two.y);
+        (${one: Point2d} * ${two: Point2d}) => Point2d.new($one.x * $two.x, $one.y * $two.y);
+        (${one: Point2d} / ${two: Point2d}) => Point2d.new($one.x / $two.x, $one.y / $two.y);
+        (${one: Point2d} % ${two: Point2d}) => Point2d.new($one.x % $two.x, $one.y % $two.y);
+        (${one: Point2d} ** ${two: Point2d}) => Point2d.new(pow($one.x, $two.x), pow($one.y, $two.y));
+        (atan2(${pt: Point2d})) => atan2($pt.x, $pt.y);
     }
 }

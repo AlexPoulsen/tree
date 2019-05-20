@@ -27,7 +27,7 @@ function lineIntersection(line1: Line, line2: Line): Bool {
 }
 
 
-function distPointToLine(line: Line, p: Point): Float {
+function distPoint2dToLine(line: Line, p: Point2d): Float {
     var dx: Float = line.p2.x - line.p1.x;
     var dy: Float = line.p2.y - line.p1.y;
     if ((dx == 0) && (dy == 0)) {
@@ -47,7 +47,7 @@ function distPointToLine(line: Line, p: Point): Float {
         dx = p.x - line.p2.x;
         dy = p.y - line.p2.y;
     } else {
-        var closest: Point = Point.new(line.p1.x + t * dx, line.p1.y + t * dy);
+        var closest: Point2d = Point2d.new(line.p1.x + t * dx, line.p1.y + t * dy);
         dx = p.x - closest.x;
         dy = p.y - closest.y;
     }
@@ -57,36 +57,36 @@ function distPointToLine(line: Line, p: Point): Float {
 
 
 struct Line {
-    var p1: Point;
-    var p2: Point;
-    var center: Point;
+    var p1: Point2d;
+    var p2: Point2d;
+    var center: Point2d;
     var length: Float;
 
     static function new(x1: Float, y1: Float, x2: Float, y2: Float): Line {
-        var p1: Point = Point.new(x1, y1);
-        var p2: Point = Point.new(x2, y2);
+        var p1: Point2d = Point2d.new(x1, y1);
+        var p2: Point2d = Point2d.new(x2, y2);
         return struct Self {
             p1: p1,
             p2: p2,
-            center: Point.new((x1 + x2) / 2, (y1 + y2) / 2),
+            center: Point2d.new((x1 + x2) / 2, (y1 + y2) / 2),
             length: p1.dist(p2)
         };
     }
 
-    static function newFromPoints(p1: Point, p2: Point): Line {
+    static function newFromPoint2ds(p1: Point2d, p2: Point2d): Line {
         return struct Self {
             p1: p1,
             p2: p2,
-            center: Point.new((p1.x + p2.x) / 2, (p1.y + p2.y) / 2),
+            center: Point2d.new((p1.x + p2.x) / 2, (p1.y + p2.y) / 2),
             length: p1.dist(p2)
         };
     }
 
-    static function newFromCenterDistAngle(p1: Point, p2: Point): Line {
+    static function newFromCenterDistAngle(p1: Point2d, p2: Point2d): Line {
         return struct Self {
             p1: p1,
             p2: p2,
-            center: Point.new((p1.x + p2.x) / 2, (p1.y + p2.y) / 2),
+            center: Point2d.new((p1.x + p2.x) / 2, (p1.y + p2.y) / 2),
             length: p1.dist(p2)
         };
     }
