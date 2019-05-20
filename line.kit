@@ -1,0 +1,35 @@
+import kit.math;
+include "string.h";
+include "time.h";
+include "stdlib.h";
+include "stdio.h";
+include "math.h";
+
+import helperfunctions;
+import point;
+import rect;
+import circle;
+import line;
+
+
+struct Line {
+    var p1: Point;
+    var p2: Point;
+    var center: Point;
+    var length: Float;
+
+    static function new(x1: Float, y1: Float, x2: Float, y2: Float): Line {
+        var p1: Point = Point.new(x1, y1);
+        var p2: Point = Point.new(x2, y2);
+        return struct Self {
+            p1: p1,
+            p2: p2,
+            center: Point.new((x1 + x2) / 2, (y1 + y2) / 2),
+            length: p1.dist(p2)
+        };
+    }
+
+    public function base(): Ptr[Void]{
+        return &this;
+    }
+}
