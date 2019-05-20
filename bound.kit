@@ -53,11 +53,16 @@ implement Bound for Rect {
     }
 
     function intersects(other: Box[Bound]): Bool {
-        var otherRect: Ptr[Rect] = other.base() as Ptr[Rect];
-        return !(otherRect.x - otherRect.w > this.x + this.w ||
-                otherRect.x + otherRect.w < this.x - this.w ||
-                otherRect.y - otherRect.h > this.y + this.h ||
-                otherRect.y + otherRect.h < this.y - this.h);
+        if other.type() == "rect" {
+            var otherRect: Ptr[Rect] = other.base() as Ptr[Rect];
+            return !(otherRect.x - otherRect.w > this.x + this.w ||
+                    otherRect.x + otherRect.w < this.x - this.w ||
+                    otherRect.y - otherRect.h > this.y + this.h ||
+                    otherRect.y + otherRect.h < this.y - this.h);
+        }
+        if other.type() == "circle" {
+            return (other.base() as Ptr[Circle]).intersectsRect(this);
+        }
     }
 
     function print(): Void {
