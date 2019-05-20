@@ -14,6 +14,7 @@ include "stdio.h";
 include "math.h";
 
 import helperfunctions;
+import point;
 
 
 function rectDist(angle: Float, rect: Rect): Float {
@@ -48,50 +49,6 @@ function rectDist(angle: Float, rect: Rect): Float {
                 +
                 (py - y) * (py - y)
                 );
-}
-
-
-struct Point {
-    var x: Float;
-    var y: Float;
-    var initialized: Bool = false;
-
-    static function new(x: Float, y: Float) {
-        return struct Self {
-            x,
-            y,
-            initialized: true
-        };
-    }
-
-    function dist(other: Point): Float {
-        return sqrtf((this.x - other.x) * (this.x - other.x)
-                    +
-                    (this.y - other.y) * (this.y - other.y)
-                    );
-    }
-
-    function print(printUnInit: Bool = true, append: CString = "") {
-        if this.initialized {
-            printf("(%f, %f)", this.x, this.y);
-            printf("%s", append);
-        } else {
-            if printUnInit {
-                printf("(-.---, -.---)");
-                printf("%s", append);
-            }
-        }
-    }
-
-    rules {
-        (${one: Point} - ${two: Point}) => Point.new($one.x - $two.x, $one.y - $two.y);
-        (${one: Point} + ${two: Point}) => Point.new($one.x + $two.x, $one.y + $two.y);
-        (${one: Point} * ${two: Point}) => Point.new($one.x * $two.x, $one.y * $two.y);
-        (${one: Point} / ${two: Point}) => Point.new($one.x / $two.x, $one.y / $two.y);
-        (${one: Point} % ${two: Point}) => Point.new($one.x % $two.x, $one.y % $two.y);
-        (${one: Point} ** ${two: Point}) => Point.new(pow($one.x, $two.x), pow($one.y, $two.y));
-        (atan2(${pt: Point})) => atan2($pt.x, $pt.y);
-    }
 }
 
 
