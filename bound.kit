@@ -50,6 +50,14 @@ implement Bound for Rect {
             var dist = thisRect.center.dist(otherCircle.center);
             return (dist - otherCircle.r) - rectDist(angle_thisToOther, thisRect);
         }
+        if other.type() == "line" {
+            var o: Ptr[Line] = other.base() as Ptr[Line];
+            var a: Float = min(distPointToLine(o, this.tl), distPointToLine(o, this.tr));
+            var b: Float = min(distPointToLine(o, this.tr), distPointToLine(o, this.bl));
+            var c: Float = min(distPointToLine(o, this.bl), distPointToLine(o, this.br));
+            var d: Float = min(distPointToLine(o, this.br), distPointToLine(o, this.tl));
+            return min(min(a, b), min(c, d));
+        }
     }
 
     function intersects(other: Box[Bound]): Bool {
@@ -62,6 +70,13 @@ implement Bound for Rect {
         }
         if other.type() == "circle" {
             return (other.base() as Ptr[Circle]).intersectsRect(this);
+        }
+        if other.type() == "line" {
+            var o: Ptr[Line] = other.base() as Ptr[Line];
+            return (lineIntersection(o, this.line_tl_tr) ||
+                    lineIntersection(o, this.line_tr_bl) ||
+                    lineIntersection(o, this.line_bl_br) ||
+                    lineIntersection(o, this.line_br_tl));
         }
     }
 
@@ -104,6 +119,10 @@ implement Bound for Circle {
             var dist = this.center.dist(otherCircle.center);
             return (dist - this.r) - otherCircle.r;
         }
+        if other.type() == "line" {
+            var o: Ptr[Line] = other.base() as Ptr[Line];
+            return distPointToLine(o, this.center);
+        }
     }
 
     function intersects(other: Box[Bound]): Bool {
@@ -112,6 +131,10 @@ implement Bound for Circle {
         }
         if other.type() == "circle" {
             return this.intersectsCircle(other.base() as Ptr[Circle]);
+        }
+        if other.type() == "line" {
+            var o: Ptr[Line] = other.base() as Ptr[Line];
+            return this.r <= distPointToLine(o, this.center);
         }
     }
 
@@ -123,5 +146,60 @@ implement Bound for Circle {
 
     function type() {
         return "circle";
+    }
+}
+
+implement Bound for Line {
+    function contains(pt: Point): Bool {
+        return distPointToLine(this, pt) < 0.00001;
+    }
+
+    function dist(other: Box[Bound]): Float {
+        if other.type() == "rect" {
+            var o: Ptr[Rect] = other.base() as Ptr[Rect];
+            var a: Float = min(distPointToLine(this, o.tl), distPointToLine(this, o.tr));
+            var b: Float = min(distPointToLine(this, o.tr), distPointToLine(this, o.bl));
+            var c: Float = min(distPointToLine(this, o.bl), distPointToLine(this, o.br));
+            var d: Float = min(distPointToLine(this, o.br), distPointToLine(this, o.tl));
+            return min(min(a, b), min(c, d));
+        }
+        if other.type() == "circle" {
+            var o: Ptr[Circle] = other.base() as Ptr[Circle];
+            return distPointToLine(this, o.center);
+        }
+        if other.type() == "line" {
+            var o: Ptr[Line] = other.base() as Ptr[Line];
+            return min(distPointToLine(this, o.p1), distPointToLine(this, o.p2));
+        }
+    }
+
+    function intersects(other: Box[Bound]): Bool {
+        if other.type() == "rect" {
+            var o: Ptr[Rect] = other.base() as Ptr[Rect];
+            return (lineIntersection(this, o.line_tl_tr) ||
+                    lineIntersection(this, o.line_tr_bl) ||
+                    lineIntersection(this, o.line_bl_br) ||
+                    lineIntersection(this, o.line_br_tl));
+        }
+        if other.type() == "circle" {
+            var o: Ptr[Circle] = other.base() as Ptr[Circle];
+            return o.r <= distPointToLine(this, o.center);
+        }
+        if other.type() == "line" {
+            return lineIntersection(this, other.base() as Ptr[Line]);
+        }
+    }
+
+    function print(): Void {
+        this.p1.print();
+        printf(", ");
+        this.p2.print();
+        printf(", ");
+        printf("%f", this.length);
+        printf("\n");
+    }
+
+    function type() {
+        return "line";
     }
 }

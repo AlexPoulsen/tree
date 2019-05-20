@@ -60,17 +60,30 @@ struct Rect {
 
     var center: Point;
 
+    var line_tl_tr: Line;
+    var line_tr_bl: Line;
+    var line_bl_br: Line;
+    var line_br_tl: Line;
+
     static function new(x: Float, y: Float, w: Float, h: Float): Rect {
+        var tl: Point = Point.new(x,     y    );
+        var tr: Point = Point.new(x + w, y    );
+        var bl: Point = Point.new(x,     y + h);
+        var br: Point = Point.new(x + w, y + h);
         return struct Self {
             x,
             y,
             w,
             h,
-            tl: Point.new(x,     y    ),
-            tr: Point.new(x + w, y    ),
-            bl: Point.new(x,     y + h),
-            br: Point.new(x + w, y + h),
-            center: Point.new(x + (w / 2), y + (h / 2))
+            tl,
+            tr,
+            bl,
+            br,
+            center: Point.new(x + (w / 2), y + (h / 2)),
+            line_tl_tr: Line.newFromPoints(tl, tr),
+            line_tr_bl: Line.newFromPoints(tr, bl),
+            line_bl_br: Line.newFromPoints(bl, br),
+            line_br_tl: Line.newFromPoints(br, tl)
         };
     }
 

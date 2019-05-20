@@ -230,18 +230,18 @@ function main() {
     // qtree.insert(Point.new(8, 13));
     // qtree.insert(Point.new(6, 1));
     qtree.debugValues();
-    var select = Rect.new(0, 0, 7, 7);
-    var selected: Vector[Point] = qtree.query(select);
-    printf("\n");
-    printf("%zu\n", selected.length);
-    // printf(selected);
-    for m in selected {
-        m.print(true, "\n");
-    }
-    var select2 = Circle.new(10, 10, 4);
-    var selected2: Vector = qtree.query(select2);
-    printf("\n");
-    for p in 0 ... selected2.length {
-        selected2[p].print(true, "\n");
-    }
+    // var select = Rect.new(0, 0, 7, 7);
+    // var selected: Vector[Point] = qtree.query(select);
+    // printf("\n");
+    // printf("%zu\n", selected.length);
+    // // printf(selected);
+    // for m in selected {
+    //     m.print(true, "\n");
+    // }
+    // var select2 = Circle.new(10, 10, 4);
+    // var selected2: Vector = qtree.query(select2);
+    // printf("\n");
+    // for p in 0 ... selected2.length {
+    //     selected2[p].print(true, "\n");
+    // }
 }

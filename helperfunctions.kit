@@ -55,3 +55,19 @@ function radian_PosNeg_To_0to2pi(angle: Float) {
         return angle;
     }
 }
+
+function min(a: Float, b: Float) {
+    return (if (a < b) then a else b);
+}
+
+function max(a: Float, b: Float) {
+    return (if (a > b) then a else b);
+}
+
+function absMin(a: Float, b: Float) {
+    return (if (absF(a) < absF(b)) then a else b);
+}
+
+function absMax(a: Float, b: Float) {
+    return (if (absF(a) > absF(b)) then a else b);
+}
