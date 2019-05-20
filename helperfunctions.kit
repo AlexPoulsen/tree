@@ -1,0 +1,57 @@
+import kit.math;
+include "string.h";
+include "time.h";
+include "stdlib.h";
+include "stdio.h";
+include "math.h";
+
+
+function absF(n: Float) {
+    if n < 0 {
+        return n * -1;
+    } else {
+        return n;
+    }
+}
+
+
+function strAdd(one: CString, two: CString) {
+    var out = malloc(one.length + two.length + 1);
+    strcpy(out, one);
+    strcat(out, two);
+    return out;
+}
+
+
+function randF(lower: Float, upper: Float) {
+    // printf("%lu", clock());
+    srand48(clock());
+    return lower + drand48() * (upper - lower);
+}
+
+
+const pi: Float = 3.14159265358979;
+
+function sign(x: Float): Float {
+    if (x < 0) {
+        return -1;
+    }
+    if (x > 0) {
+        return 1;
+    }
+    return 0;
+}
+
+// cotangent
+function cot(x: Float): Float {
+    return tan(pi/2 - x);
+}
+
+
+function radian_PosNeg_To_0to2pi(angle: Float) {
+    if (angle < 0) {
+        return (2 * pi) - angle;
+    } else {
+        return angle;
+    }
+}
