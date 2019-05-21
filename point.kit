@@ -47,7 +47,7 @@ struct Point2d {
         (${one: Point2d} / ${two: Point2d}) => Point2d.new($one.x / $two.x, $one.y / $two.y);
         (${one: Point2d} % ${two: Point2d}) => Point2d.new($one.x % $two.x, $one.y % $two.y);
         (${one: Point2d} ** ${two: Point2d}) => Point2d.new(pow($one.x, $two.x), pow($one.y, $two.y));
-        (atan2(${pt: Point2d})) => atan2($pt.x, $pt.y);
+        (atan2(${pt: Point2d})) => atan2($pt.y, $pt.x);
     }
 }
 
